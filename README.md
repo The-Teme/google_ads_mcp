@@ -127,17 +127,141 @@ The server exposes tools for interacting with Google Ads. Some tools are read-on
 
 - **GAQL Execution**: Query Google Ads data using GAQL.
 - **Account Management**: List accessible accounts.
+- **MCC Navigation**: List child accounts, inspect account hierarchy, and get account summaries.
 - **Documentation**: Access documentation for GAQL and reporting views.
+
+#### Account & Metadata (`gads_*`)
+
+Read-only (`R`), idempotent (`I`). Always available.
+
+| Tool | Purpose | Key params | |
+| --- | --- | --- | --- |
+| `gads_list_accounts` | List accessible accounts with IDs, names, currency, timezone. | `login_customer_id?` | R, I |
+| `gads_get_account` | Fetch a single account's config (currency, timezone, status, manager). | `customer_id`, `login_customer_id?` | R, I |
+| `gads_list_resources` | List valid GAQL resources, or one resource's fields. | `resource?` | R, I |
+
+#### Optimization & Planning — read tools (`gads_*`)
+
+Read-only (`R`), idempotent (`I`). Always available. (The apply/dismiss tools are mutations — see below.)
+
+| Tool | Purpose | Key params | |
+| --- | --- | --- | --- |
+| `gads_list_recommendations` | List Google's auto-recommendations for the account. | `customer_id`, `types?` | R, I |
+| `gads_generate_keyword_ideas` | Keyword Planner ideas + search volume/competition. Requires Basic+ API access. | `customer_id`, `seed_keywords?` / `url?`, `geo_target_ids?`, `language_id?` | R, I |
+| `gads_list_conversion_actions` | List configured conversion actions. | `customer_id` | R, I |
+| `gads_list_assets` | List account assets (images, sitelinks, callouts). | `customer_id`, `asset_type?` | R, I |
+
+#### Performance Reporting (`gads_*`)
+
+Convenience wrappers over GAQL for everyday reporting. All are read-only (`R`)
+and idempotent (`I`).
+
+| Tool | Purpose | Key params | |
+| --- | --- | --- | --- |
+| `gads_run_gaql` | Run an arbitrary GAQL query. Covers nearly the whole read surface. | `customer_id`, `query`, `page_size?`, `page_token?` | R, I |
+| `gads_get_campaign_performance` | Campaign metrics (impressions, clicks, cost, conversions, ROAS) over a date range. | `customer_id`, `date_range?` or `start_date?` / `end_date?`, `campaign_ids?` | R, I |
+| `gads_get_ad_group_performance` | Same, at ad-group level. | `customer_id`, `date_range?`, `campaign_ids?` | R, I |
+| `gads_get_ad_performance` | Same, at ad level, with creative fields (headlines, descriptions, final URLs). | `customer_id`, `date_range?`, `ad_group_ids?` | R, I |
+| `gads_get_keyword_performance` | Keyword-level metrics + match type + Quality Score. | `customer_id`, `date_range?`, `ad_group_ids?` | R, I |
+| `gads_get_search_terms` | Search-terms report (what people actually queried). | `customer_id`, `date_range?`, `campaign_ids?` | R, I |
+
+**Conventions shared by these tools:**
+
+- **`login_customer_id` (optional)** — every tool accepts this. When omitted,
+  the `login_customer_id` from your `google-ads.yaml` is used. Set it to the
+  manager (MCC) account ID when querying a managed client account, exactly as
+  with `execute_gaql`.
+- **`date_range`** — a predefined Google Ads range such as `LAST_7_DAYS`,
+  `LAST_30_DAYS` (default), `THIS_MONTH`, or `LAST_MONTH`. For a custom window,
+  pass `start_date` and `end_date` as `YYYY-MM-DD` instead (these take
+  precedence over `date_range`).
+- **Metrics** — monetary values are returned in account-currency units (micros
+  are converted), and `roas` is derived as `conversions_value / cost`.
+- **ID filters** — `campaign_ids` / `ad_group_ids` accept digit-only IDs and are
+  validated before being used in the query.
+- **`page_size`** — accepted by `gads_run_gaql` for compatibility but ignored;
+  the Google Ads API fixes the page size at 10000 rows. Use `page_token`
+  (returned as `next_page_token`) to page through results.
 
 ### Mutation Tools (Disabled by Default)
 
 To enable these tools, set `ADS_MCP_ENABLE_MUTATIONS=true`.
 
-- **Campaign Budgets**: Create campaign budgets.
-- **Campaigns**: Create campaigns.
-- **Ad Groups**: Create ad groups.
-- **Ads**: Create ads.
-- **Criteria**: Create criteria (e.g., keywords).
+The original direct-execute tools remain available (Campaign Budgets,
+Campaigns, Ad Groups, Ads, Criteria), as do the `propose_*` approval-gated
+tools and `preview_*` diff tools.
+
+#### Approval-gated `gads_*` mutations (spec §3–§7)
+
+All of the `gads_*` mutation tools below route through the **approval
+workflow** — calling one stages a pending change and returns a `change_id`;
+nothing hits the Google Ads API until you call `approve_change(change_id)`
+(or discard it with `reject_change`). Use `list_pending_changes` to review.
+
+Annotation shorthand: **R** = read-only, **D** = destructive, **I** = idempotent.
+
+Two safety behaviours apply throughout:
+
+- **`validate_only` (optional, default false)** — when the staged change is
+  approved, it runs as a Google Ads API `validateOnly` dry-run (no
+  persistence) and returns `{"validated_only": true}`. (`gads_apply_recommendation`
+  is the exception — the API has no dry-run for it, so passing `validate_only`
+  raises.)
+- **New entities are created PAUSED.** Use a `gads_set_*_status` tool to go live.
+- **Amounts are in micros** (1,000,000 micros = 1 currency unit).
+- **`login_customer_id` (optional)** — manager (MCC) ID for managed accounts.
+
+**Campaign structure (§3)**
+
+| Tool | Purpose | Key params | |
+| --- | --- | --- | --- |
+| `gads_create_campaign` | Create a campaign (PAUSED). | `customer_id`, `name`, `channel_type`, `budget_id`, `bidding_strategy?`, `start_date?`, `end_date?`, `validate_only?` | not-R, not-D, not-I |
+| `gads_update_campaign` | Update name and/or dates. | `customer_id`, `campaign_id`, `name?`, `start_date?`, `end_date?`, `validate_only?` | not-R, not-D, I |
+| `gads_set_campaign_status` | Enable / pause / remove a campaign. | `customer_id`, `campaign_id`, `status`, `validate_only?` | not-R, D, I |
+| `gads_create_ad_group` | Create an ad group (PAUSED). | `customer_id`, `campaign_id`, `name`, `cpc_bid_micros?`, `validate_only?` | not-R, not-D, not-I |
+| `gads_update_ad_group` | Update name and/or CPC bid. | `customer_id`, `ad_group_id`, `name?`, `cpc_bid_micros?`, `validate_only?` | not-R, not-D, I |
+| `gads_set_ad_group_status` | Enable / pause / remove an ad group. | `customer_id`, `ad_group_id`, `status`, `validate_only?` | not-R, D, I |
+
+**Ads & creatives (§4)**
+
+| Tool | Purpose | Key params | |
+| --- | --- | --- | --- |
+| `gads_create_responsive_search_ad` | Create an RSA (PAUSED). | `customer_id`, `ad_group_id`, `headlines[]`, `descriptions[]`, `final_urls[]`, `path1?`, `path2?`, `validate_only?` | not-R, not-D, not-I |
+| `gads_update_ad` | Update an RSA's assets/URLs. | `customer_id`, `ad_id`, `headlines?`, `descriptions?`, `final_urls?`, `path1?`, `path2?`, `validate_only?` | not-R, not-D, I |
+| `gads_set_ad_status` | Enable / pause / remove an ad. | `customer_id`, `ad_group_id`, `ad_id`, `status`, `validate_only?` | not-R, D, I |
+| `gads_upload_image_asset` | Upload an image asset. | `customer_id`, `name`, `image_data?` (base64) / `url?`, `validate_only?` | not-R, not-D, not-I |
+
+**Keywords & targeting (§5)**
+
+| Tool | Purpose | Key params | |
+| --- | --- | --- | --- |
+| `gads_add_keywords` | Add keywords (ENABLED) to an ad group. | `customer_id`, `ad_group_id`, `keywords[]` (`{text, match_type, cpc_bid_micros?}`), `validate_only?` | not-R, not-D, not-I |
+| `gads_add_negative_keywords` | Add negatives at ad-group or campaign level. | `customer_id`, `level`, `parent_id`, `keywords[]`, `match_type?`, `validate_only?` | not-R, not-D, I |
+| `gads_remove_keywords` | Remove keyword criteria. | `customer_id`, `ad_group_id`, `criterion_ids[]`, `validate_only?` | not-R, D, I |
+| `gads_set_targeting` | Add/remove geo, language, device, audience criteria. | `customer_id`, `campaign_id?` / `ad_group_id?`, `criteria[]` (`{type, value, negative?}`), `validate_only?` | not-R, not-D, not-I |
+
+**Budgets & bidding (§6)**
+
+| Tool | Purpose | Key params | |
+| --- | --- | --- | --- |
+| `gads_create_budget` | Create a campaign budget. | `customer_id`, `name`, `amount_micros`, `delivery_method?`, `validate_only?` | not-R, not-D, not-I |
+| `gads_update_budget` | Change a budget's daily amount. | `customer_id`, `budget_id`, `amount_micros`, `validate_only?` | not-R, not-D, I |
+| `gads_update_bidding_strategy` | Set campaign bidding (manual CPC, tCPA, tROAS, max conv/value, target spend). | `customer_id`, `campaign_id`, `strategy`, `target?`, `validate_only?` | not-R, not-D, I |
+
+**Optimization & planning — apply (§7)**
+
+| Tool | Purpose | Key params | |
+| --- | --- | --- | --- |
+| `gads_apply_recommendation` | Apply a recommendation. | `customer_id`, `recommendation_id` | not-R, not-D, not-I |
+| `gads_dismiss_recommendation` | Dismiss a recommendation. | `customer_id`, `recommendation_id` | not-R, not-D, I |
+
+> **A note on params:** the spec suggests reading `customer_id` / `login_customer_id`
+> from env only. This server keeps them as explicit params (consistent with
+> `execute_gaql` and the reporting tools) so multiple accounts and MCC clients
+> can be addressed without reconfiguring. A few tools also require an extra
+> parent ID the spec omits (e.g. `gads_set_ad_status` needs `ad_group_id`,
+> `gads_remove_keywords` needs `ad_group_id`) because the underlying Google Ads
+> resource is keyed by it.
 
 ## Contributing
 

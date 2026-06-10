@@ -44,7 +44,10 @@ from ads_mcp.coordinator import mcp_server
 from ads_mcp.scripts.generate_views import update_views_yaml
 from ads_mcp.tools import accounts
 from ads_mcp.tools import docs
+from ads_mcp.tools import gads_accounts
+from ads_mcp.tools import gads_reads
 from ads_mcp.tools import mcc
+from ads_mcp.tools import performance
 from ads_mcp.tools import reporting
 from ads_mcp.tools._utils import get_ads_client
 from ads_mcp.tools.mutations import approval  # always register approval tools
@@ -57,7 +60,16 @@ dotenv.load_dotenv()
 # ---------------------------------------------------------------------------
 # Always-on tools (read + approval workflow)
 # ---------------------------------------------------------------------------
-tools = [reporting, accounts, docs, mcc, approval]
+tools = [
+    reporting,
+    accounts,
+    docs,
+    mcc,
+    performance,
+    gads_accounts,
+    gads_reads,
+    approval,
+]
 
 # ---------------------------------------------------------------------------
 # Mutation tools (opt-in via env var)
@@ -67,6 +79,23 @@ if os.getenv("ADS_MCP_ENABLE_MUTATIONS", "false").lower() == "true":
   from ads_mcp.tools.mutations import gated_campaign  # propose_* tools
 
   tools.extend([preview, gated_campaign])
+
+  # Approval-gated gads_* mutation tools (spec sections 3-7). These route
+  # through the same propose()/approve_change() workflow and add per-tool
+  # validate_only dry-runs and paused-by-default creation.
+  from ads_mcp.tools.gads_mutations import structure        # §3
+  from ads_mcp.tools.gads_mutations import budgets_bidding   # §6
+  from ads_mcp.tools.gads_mutations import ads_creatives     # §4
+  from ads_mcp.tools.gads_mutations import keywords_targeting  # §5
+  from ads_mcp.tools.gads_mutations import recommendations   # §7 apply/dismiss
+
+  tools.extend([
+      structure,
+      budgets_bidding,
+      ads_creatives,
+      keywords_targeting,
+      recommendations,
+  ])
 
   # Original direct-execute tools — available unless explicitly disabled.
   # Set ADS_MCP_DIRECT_MUTATIONS=false to enforce approval-only mode.
