@@ -44,7 +44,7 @@ def test_create_responsive_search_ad_success(mock_get_client):
   mock_service.mutate_ad_group_ads.return_value = mock_response
 
   result = ad.create_responsive_search_ad(
-      customer_id="123",
+      customer_id="1234567890",
       ad_group_resource_name="customers/123/adGroups/abc",
       headlines=["Headline 1", "Headline 2"],
       descriptions=["Description 1", "Description 2"],
@@ -72,7 +72,7 @@ def test_create_responsive_search_ad_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     ad.create_responsive_search_ad(
-        customer_id="123",
+        customer_id="1234567890",
         ad_group_resource_name="customers/123/adGroups/abc",
         headlines=["Headline 1", "Headline 2"],
         descriptions=["Description 1", "Description 2"],

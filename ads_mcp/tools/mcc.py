@@ -33,6 +33,8 @@ from __future__ import annotations
 from typing import Any
 
 from ads_mcp.coordinator import mcp_server as mcp
+from ads_mcp.guardrails import validate_accounts
+from ads_mcp.guardrails import validate_customer_id
 from ads_mcp.tools._utils import get_ads_client
 from fastmcp.exceptions import ToolError
 from google.ads.googleads.errors import GoogleAdsException
@@ -90,6 +92,7 @@ def list_mcc_child_accounts(
     time_zone, level (depth from MCC), manager (True if it's itself an MCC),
     and status.
   """
+  mcc_id = validate_customer_id(mcc_id, "mcc_id")
   query = """
     SELECT
       customer_client.id,
@@ -140,6 +143,7 @@ def get_account_hierarchy(mcc_id: str) -> dict[str, Any]:
       id, name, currency, timezone, is_manager, status, children (list).
     The root node is the MCC itself.
   """
+  mcc_id = validate_customer_id(mcc_id, "mcc_id")
   # Fetch all accounts in the hierarchy
   accounts = list_mcc_child_accounts(mcc_id, include_hidden=True)
 
@@ -214,6 +218,9 @@ def get_account_summary(
   Returns:
     Dict with account name, currency, timezone, status, and manager flag.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   ads_client = get_ads_client()
   if login_customer_id:
     ads_client.login_customer_id = login_customer_id

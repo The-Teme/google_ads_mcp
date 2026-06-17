@@ -44,7 +44,7 @@ def test_create_campaign_budget_success(mock_get_client):
   mock_service.mutate_campaign_budgets.return_value = mock_response
 
   result = budget.create_campaign_budget(
-      customer_id="123",
+      customer_id="1234567890",
       name="Test Budget",
       amount_micros=1000000,
   )
@@ -70,7 +70,7 @@ def test_create_campaign_budget_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     budget.create_campaign_budget(
-        customer_id="123",
+        customer_id="1234567890",
         name="Test Budget",
         amount_micros=1000000,
     )

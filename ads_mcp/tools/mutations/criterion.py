@@ -15,6 +15,7 @@
 """Criterion mutation tools for Google Ads API."""
 
 from ads_mcp.coordinator import mcp_server as mcp
+from ads_mcp.guardrails import validate_accounts
 from ads_mcp.tools._ads_api import common_types
 from ads_mcp.tools._ads_api import enum_types
 from ads_mcp.tools._ads_api import resource_types
@@ -45,6 +46,9 @@ def create_keywords(
   Returns:
       Dict with list of created keyword resource_names.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   ads_client = _get_client(login_customer_id)
   service = ads_client.get_service("AdGroupCriterionService")
 
@@ -98,6 +102,9 @@ def create_negative_campaign_keywords(
   Returns:
       Dict with list of created criterion resource_names.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   ads_client = _get_client(login_customer_id)
   service = ads_client.get_service("CampaignCriterionService")
 
@@ -144,6 +151,9 @@ def create_geo_targeting(
   Returns:
       Dict with list of created criterion resource_names.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   ads_client = _get_client(login_customer_id)
   service = ads_client.get_service("CampaignCriterionService")
   geo_svc = ads_client.get_service("GeoTargetConstantService")
@@ -189,6 +199,9 @@ def remove_campaign_criterion(
   Returns:
       Dict with the removed resource_name.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   ads_client = _get_client(login_customer_id)
   service = ads_client.get_service("CampaignCriterionService")
 
@@ -225,6 +238,9 @@ def exclude_geo_targets(
   Returns:
       Dict with list of created exclusion resource_names.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   ads_client = _get_client(login_customer_id)
   service = ads_client.get_service("CampaignCriterionService")
   geo_svc = ads_client.get_service("GeoTargetConstantService")

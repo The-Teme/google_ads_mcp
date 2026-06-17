@@ -45,7 +45,7 @@ def test_create_keywords_success(mock_get_client):
   mock_service.mutate_ad_group_criteria.return_value = mock_response
 
   result = criterion.create_keywords(
-      customer_id="123",
+      customer_id="1234567890",
       ad_group_resource_name="customers/123/adGroups/abc",
       keywords=[
           {"text": "keyword1", "match_type": "EXACT"},
@@ -79,7 +79,7 @@ def test_create_keywords_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     criterion.create_keywords(
-        customer_id="123",
+        customer_id="1234567890",
         ad_group_resource_name="customers/123/adGroups/abc",
         keywords=[{"text": "keyword1", "match_type": "EXACT"}],
     )
@@ -103,7 +103,7 @@ def test_create_negative_campaign_keywords_success(mock_get_client):
   mock_service.mutate_campaign_criteria.return_value = mock_response
 
   result = criterion.create_negative_campaign_keywords(
-      customer_id="123",
+      customer_id="1234567890",
       campaign_resource_name="customers/123/campaigns/789",
       keywords=["free", "fake"],
   )
@@ -134,7 +134,7 @@ def test_create_negative_campaign_keywords_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     criterion.create_negative_campaign_keywords(
-        customer_id="123",
+        customer_id="1234567890",
         campaign_resource_name="customers/123/campaigns/789",
         keywords=["free"],
     )
@@ -167,7 +167,7 @@ def test_create_geo_targeting_success(mock_get_client):
   mock_service.mutate_campaign_criteria.return_value = mock_response
 
   result = criterion.create_geo_targeting(
-      customer_id="123",
+      customer_id="1234567890",
       campaign_resource_name="customers/123/campaigns/789",
       geo_target_constant_ids=[2840, 2124],
   )
@@ -207,7 +207,7 @@ def test_create_geo_targeting_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     criterion.create_geo_targeting(
-        customer_id="123",
+        customer_id="1234567890",
         campaign_resource_name="customers/123/campaigns/789",
         geo_target_constant_ids=[2840],
     )
@@ -234,7 +234,7 @@ def test_remove_campaign_criterion_success(mock_get_client):
   mock_service.mutate_campaign_criteria.return_value = mock_response
 
   result = criterion.remove_campaign_criterion(
-      customer_id="123",
+      customer_id="1234567890",
       campaign_id="789",
       criterion_id="abc",
   )
@@ -264,7 +264,7 @@ def test_remove_campaign_criterion_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     criterion.remove_campaign_criterion(
-        customer_id="123",
+        customer_id="1234567890",
         campaign_id="789",
         criterion_id="abc",
     )
@@ -297,7 +297,7 @@ def test_exclude_geo_targets_success(mock_get_client):
   mock_service.mutate_campaign_criteria.return_value = mock_response
 
   result = criterion.exclude_geo_targets(
-      customer_id="123",
+      customer_id="1234567890",
       campaign_resource_name="customers/123/campaigns/789",
       geo_target_constant_ids=[2840, 2124],
   )
@@ -337,7 +337,7 @@ def test_exclude_geo_targets_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     criterion.exclude_geo_targets(
-        customer_id="123",
+        customer_id="1234567890",
         campaign_resource_name="customers/123/campaigns/789",
         geo_target_constant_ids=[2840],
     )

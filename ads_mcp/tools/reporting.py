@@ -20,6 +20,7 @@ import json
 from typing import Any
 
 from ads_mcp.coordinator import mcp_server as mcp
+from ads_mcp.guardrails import validate_accounts
 from ads_mcp.tools._utils import get_ads_client
 from fastmcp.exceptions import ToolError
 from google.ads.googleads.errors import GoogleAdsException
@@ -85,6 +86,9 @@ def execute_gaql(
   Returns:
       An array of object, each object representing a row of the query results.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   query = preprocess_gaql(query)
   ads_client = get_ads_client()
   if login_customer_id:

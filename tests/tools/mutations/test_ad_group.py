@@ -44,7 +44,7 @@ def test_create_ad_group_success(mock_get_client):
   mock_service.mutate_ad_groups.return_value = mock_response
 
   result = ad_group.create_ad_group(
-      customer_id="123",
+      customer_id="1234567890",
       name="Test Ad Group",
       campaign_resource_name="customers/123/campaigns/789",
   )
@@ -70,7 +70,7 @@ def test_create_ad_group_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     ad_group.create_ad_group(
-        customer_id="123",
+        customer_id="1234567890",
         name="Test Ad Group",
         campaign_resource_name="customers/123/campaigns/789",
     )
@@ -93,7 +93,7 @@ def test_update_ad_group_status_success(mock_get_client):
   mock_service.mutate_ad_groups.return_value = mock_response
 
   result = ad_group.update_ad_group_status(
-      customer_id="123",
+      customer_id="1234567890",
       ad_group_resource_name="customers/123/adGroups/abc",
       status="PAUSED",
   )
@@ -119,7 +119,7 @@ def test_update_ad_group_status_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     ad_group.update_ad_group_status(
-        customer_id="123",
+        customer_id="1234567890",
         ad_group_resource_name="customers/123/adGroups/abc",
         status="PAUSED",
     )

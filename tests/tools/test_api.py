@@ -114,5 +114,5 @@ def test_execute_gaql(mock_get_ads_client):
       "ads_mcp.tools.reporting.get_nested_attr", return_value="123"
   ):
     assert reporting.execute_gaql(
-        "SELECT campaign.id FROM campaign", "123"
+        "SELECT campaign.id FROM campaign", "1234567890"
     ) == {"data": [{"campaign.id": "123"}]}

@@ -15,6 +15,8 @@
 """Ad group mutation tools for Google Ads API."""
 
 from ads_mcp.coordinator import mcp_server as mcp
+from ads_mcp.guardrails import check_bid_micros
+from ads_mcp.guardrails import validate_accounts
 from ads_mcp.tools._ads_api import enum_types
 from ads_mcp.tools._ads_api import resource_types
 from ads_mcp.tools._ads_api import service_types
@@ -47,6 +49,10 @@ def create_ad_group(
   Returns:
       Dict with the ad_group resource_name.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
+  check_bid_micros(cpc_bid_micros)
   ads_client = _get_client(login_customer_id)
   service = ads_client.get_service("AdGroupService")
 
@@ -90,6 +96,9 @@ def update_ad_group_status(
   Returns:
       Dict with the updated ad group resource_name.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   ads_client = _get_client(login_customer_id)
   service = ads_client.get_service("AdGroupService")
 
