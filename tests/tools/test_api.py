@@ -70,7 +70,7 @@ def test_format_value(mocker):
   # Test with a proto.Message
   mock_message = mock.Mock(spec=proto.Message)
   mocker.patch.object(
-      proto.Message, "to_json", return_value='{"key": "value"}'
+      proto.Message, "to_dict", return_value={"key": "value"}
   )
   assert reporting.format_value(mock_message) == {"key": "value"}
 
