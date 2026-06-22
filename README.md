@@ -52,6 +52,29 @@ The server can be configured using the following environment variables:
 - `GOOGLE_ADS_CREDENTIALS`: Path to the `google-ads.yaml` file.
 - `USE_GOOGLE_OAUTH_ACCESS_TOKEN`: Set to enable Google OAuth token verification.
 
+#### Security controls
+
+These default to the safe option. Loosen them only deliberately.
+
+- `ADS_MCP_DIRECT_MUTATIONS`: Set to `true` to register the original
+  direct-execute mutation tools, which **bypass the approval workflow**.
+  Defaults to `false` (approval-only: changes must be staged via `propose_*`
+  and confirmed with `approve_change`).
+- `ADS_MCP_ALLOWED_CUSTOMER_IDS`: Comma-separated allowlist of customer IDs
+  (dashes optional, e.g. `123-456-7890,2223334444`). When set, every tool
+  refuses to touch any account not on the list. When unset, any account the
+  credentials can reach is permitted. **Strongly recommended.**
+- `ADS_MCP_MAX_BUDGET_MICROS`: Maximum daily budget any single call may set,
+  in micros. Default `1000000000` (1,000.00/day). Set to `0` to disable.
+- `ADS_MCP_MAX_CPC_BID_MICROS`: Maximum CPC bid any single call may set, in
+  micros. Default `100000000` (100.00). Set to `0` to disable.
+- `ADS_MCP_ALLOW_INSECURE_HTTP`: The `streamable-http` server refuses to start
+  without an auth provider. Set to `true` only for a trusted, localhost-only
+  deployment. Prefer the stdio entrypoint (`run-mcp-server-stdio`) for
+  single-user local use.
+- `FASTMCP_SERVER_HOST` / `FASTMCP_SERVER_PORT`: Bind address/port for the HTTP
+  transport. Defaults to `127.0.0.1:8000` (localhost only).
+
 ### 4. Launch MCP Server
 
 #### For Direct Use with Gemini CLI

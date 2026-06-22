@@ -44,7 +44,7 @@ def test_create_search_campaign_success(mock_get_client):
   mock_service.mutate_campaigns.return_value = mock_response
 
   result = campaign.create_search_campaign(
-      customer_id="123",
+      customer_id="1234567890",
       name="Test Campaign",
       budget_resource_name="customers/123/campaignBudgets/456",
   )
@@ -70,7 +70,7 @@ def test_create_search_campaign_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     campaign.create_search_campaign(
-        customer_id="123",
+        customer_id="1234567890",
         name="Test Campaign",
         budget_resource_name="customers/123/campaignBudgets/456",
     )
@@ -93,7 +93,7 @@ def test_update_campaign_status_success(mock_get_client):
   mock_service.mutate_campaigns.return_value = mock_response
 
   result = campaign.update_campaign_status(
-      customer_id="123",
+      customer_id="1234567890",
       campaign_resource_name="customers/123/campaigns/789",
       status="ENABLED",
   )
@@ -119,7 +119,7 @@ def test_update_campaign_status_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     campaign.update_campaign_status(
-        customer_id="123",
+        customer_id="1234567890",
         campaign_resource_name="customers/123/campaigns/789",
         status="ENABLED",
     )
@@ -142,7 +142,7 @@ def test_update_campaign_geo_target_type_success(mock_get_client):
   mock_service.mutate_campaigns.return_value = mock_response
 
   result = campaign.update_campaign_geo_target_type(
-      customer_id="123",
+      customer_id="1234567890",
       campaign_resource_name="customers/123/campaigns/789",
       positive_geo_target_type="PRESENCE",
       negative_geo_target_type="PRESENCE",
@@ -156,7 +156,7 @@ def test_update_campaign_geo_target_type_no_args():
   """Tests update_campaign_geo_target_type raises error without types."""
   with pytest.raises(ToolError) as exc_info:
     campaign.update_campaign_geo_target_type(
-        customer_id="123",
+        customer_id="1234567890",
         campaign_resource_name="customers/123/campaigns/789",
     )
   assert "At least one of" in str(exc_info.value)
@@ -179,7 +179,7 @@ def test_update_campaign_geo_target_type_failure(mock_get_client):
 
   with pytest.raises(ToolError) as exc_info:
     campaign.update_campaign_geo_target_type(
-        customer_id="123",
+        customer_id="1234567890",
         campaign_resource_name="customers/123/campaigns/789",
         positive_geo_target_type="PRESENCE",
     )

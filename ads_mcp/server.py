@@ -32,9 +32,9 @@ Mutation tools (enabled when ADS_MCP_ENABLE_MUTATIONS=true):
                      tools from the upstream repo (still available for
                      power users who want them; they bypass the approval flow)
 
-  Note: if you want ALL mutations to be gated, set
-  ADS_MCP_DIRECT_MUTATIONS=false (default true). When false, the original
-  direct-execute tools are not registered.
+  Note: direct-execute tools bypass the approval flow. They are OFF by
+  default (approval-only). Set ADS_MCP_DIRECT_MUTATIONS=true to register
+  them for power users who explicitly want them.
 """
 
 import asyncio
@@ -97,9 +97,9 @@ if os.getenv("ADS_MCP_ENABLE_MUTATIONS", "false").lower() == "true":
       recommendations,
   ])
 
-  # Original direct-execute tools — available unless explicitly disabled.
-  # Set ADS_MCP_DIRECT_MUTATIONS=false to enforce approval-only mode.
-  if os.getenv("ADS_MCP_DIRECT_MUTATIONS", "true").lower() == "true":
+  # Original direct-execute tools bypass the approval flow and are therefore
+  # OFF by default. Set ADS_MCP_DIRECT_MUTATIONS=true to opt back in.
+  if os.getenv("ADS_MCP_DIRECT_MUTATIONS", "false").lower() == "true":
     from ads_mcp.tools.mutations import budget     # pylint: disable=ungrouped-imports
     from ads_mcp.tools.mutations import campaign   # pylint: disable=ungrouped-imports
     from ads_mcp.tools.mutations import ad_group   # pylint: disable=ungrouped-imports
@@ -133,9 +133,34 @@ def main():
   """Initializes and runs the MCP server."""
   asyncio.run(update_views_yaml())
   get_ads_client()
-  print("mcp server starting...")
+
+  # The streamable-http transport exposes a network port. Refuse to start
+  # without an auth provider unless the operator explicitly opts into an
+  # insecure (e.g. trusted-localhost-only) deployment. Without this guard an
+  # unauthenticated port grants full control of the Google Ads account.
+  auth_configured = getattr(mcp_server, "auth", None) is not None
+  allow_insecure = (
+      os.getenv("ADS_MCP_ALLOW_INSECURE_HTTP", "false").lower() == "true"
+  )
+  if not auth_configured and not allow_insecure:
+    raise SystemExit(
+        "Refusing to start streamable-http without authentication.\n"
+        "Configure Google OAuth (FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_ID +\n"
+        "FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_SECRET, or "
+        "USE_GOOGLE_OAUTH_ACCESS_TOKEN),\n"
+        "or for a trusted local-only setup set "
+        "ADS_MCP_ALLOW_INSECURE_HTTP=true\n"
+        "(and keep the host bound to 127.0.0.1). For single-user local use, "
+        "prefer the stdio entrypoint (run-mcp-server-stdio)."
+    )
+
+  host = os.getenv("FASTMCP_SERVER_HOST", "127.0.0.1")
+  port = int(os.getenv("FASTMCP_SERVER_PORT", "8000"))
+  print(f"mcp server starting on {host}:{port} ...")
   mcp_server.run(
       transport="streamable-http",
+      host=host,
+      port=port,
       show_banner=False,
   )
 

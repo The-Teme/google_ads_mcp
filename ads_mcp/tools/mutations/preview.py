@@ -25,6 +25,7 @@ from __future__ import annotations
 from typing import Any
 
 from ads_mcp.coordinator import mcp_server as mcp
+from ads_mcp.guardrails import validate_accounts
 from ads_mcp.tools._utils import get_ads_client
 from ads_mcp.tools.mutations.common import _get_client
 from fastmcp.exceptions import ToolError
@@ -87,6 +88,9 @@ def preview_update_campaign_status(
   Returns:
     Dict with campaign name, before/after status, and a plain-English summary.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   # Extract numeric campaign ID from resource name
   campaign_id = campaign_resource_name.split("/")[-1]
   query = (
@@ -134,6 +138,9 @@ def preview_update_campaign_budget(
   Returns:
     Dict with budget name, before/after amounts in both micros and currency units.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   budget_id = budget_resource_name.split("/")[-1]
   query = (
       f"SELECT campaign_budget.id, campaign_budget.name, "
@@ -192,6 +199,9 @@ def preview_update_ad_group_status(
   Returns:
     Dict with ad group name, before/after status.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   ad_group_id = ad_group_resource_name.split("/")[-1]
   query = (
       f"SELECT ad_group.id, ad_group.name, ad_group.status "
@@ -240,6 +250,9 @@ def preview_add_negative_keyword(
   Returns:
     Dict confirming the keyword to be added and whether it already exists.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   ad_group_id = ad_group_resource_name.split("/")[-1]
   query = (
       f"SELECT ad_group_criterion.keyword.text, "

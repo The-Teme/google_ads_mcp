@@ -24,6 +24,8 @@ from __future__ import annotations
 from typing import Any
 
 from ads_mcp.coordinator import mcp_server as mcp
+from ads_mcp.guardrails import check_budget_micros
+from ads_mcp.guardrails import validate_accounts
 from ads_mcp.tools._ads_api import common_types
 from ads_mcp.tools._ads_api import enum_types
 from ads_mcp.tools._ads_api import resource_types
@@ -66,6 +68,9 @@ def propose_create_search_campaign(
   Returns:
     Pending change record with change_id, summary, and approval instructions.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   params = dict(
       customer_id=customer_id,
       name=name,
@@ -137,6 +142,9 @@ def propose_update_campaign_status(
   Returns:
     Pending change record with change_id, summary, and approval instructions.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   params = dict(
       customer_id=customer_id,
       campaign_resource_name=campaign_resource_name,
@@ -188,6 +196,10 @@ def propose_update_campaign_budget(
   Returns:
     Pending change record.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
+  check_budget_micros(amount_micros)
   params = dict(
       customer_id=customer_id,
       budget_resource_name=budget_resource_name,
@@ -240,6 +252,9 @@ def propose_update_ad_group_status(
   Returns:
     Pending change record.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   params = dict(
       customer_id=customer_id,
       ad_group_resource_name=ad_group_resource_name,
@@ -293,6 +308,9 @@ def propose_add_negative_keyword(
   Returns:
     Pending change record.
   """
+  customer_id, login_customer_id = validate_accounts(
+      customer_id, login_customer_id
+  )
   params = dict(
       customer_id=customer_id,
       ad_group_resource_name=ad_group_resource_name,
