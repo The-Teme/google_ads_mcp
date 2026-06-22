@@ -154,13 +154,40 @@ The server exposes tools for interacting with Google Ads. Some tools are read-on
 
 ### Mutation Tools (Disabled by Default)
 
-To enable these tools, set `ADS_MCP_ENABLE_MUTATIONS=true`.
+To enable these tools, set `ADS_MCP_ENABLE_MUTATIONS=true`. By default only the
+approval-gated `propose_*` tools are registered; nothing reaches the Google Ads
+API until you call `approve_change(change_id)`. Set
+`ADS_MCP_DIRECT_MUTATIONS=true` to also register the direct-execute equivalents
+(which bypass the approval flow).
 
 - **Campaign Budgets**: Create campaign budgets.
-- **Campaigns**: Create campaigns.
-- **Ad Groups**: Create ad groups.
-- **Ads**: Create ads.
-- **Criteria**: Create criteria (e.g., keywords).
+- **Search Campaigns**: Create Search campaigns, ad groups, responsive search
+  ads, and keywords.
+- **Other Campaign Types** (created atomically — budget + campaign + ad group +
+  ad in a single request, or asset group for Performance Max):
+  - **Display**: `propose_create_display_campaign` (responsive display ad).
+  - **Shopping**: `propose_create_shopping_campaign` (requires a linked
+    Merchant Center account).
+  - **Demand Gen**: `propose_create_demand_gen_campaign` (multi-asset ad,
+    conversion bidding).
+  - **Video / YouTube**: `propose_create_video_campaign` (responsive video ad).
+  - **Performance Max**: `propose_create_pmax_campaign` (asset group; optional
+    Merchant Center for retail PMax).
+- **Assets**: `propose_create_image_asset` (base64-encoded image bytes) and
+  `propose_create_youtube_video_asset` (YouTube video ID). Create assets first,
+  then pass their resource names to the Display / Demand Gen / Video / PMax
+  builders.
+- **Status & budget updates**: Update campaign / ad group status and campaign
+  budgets, add negative keywords.
+
+#### Bidding strategies
+
+The non-Search campaign builders accept a `bidding_strategy` argument:
+`MAXIMIZE_CLICKS`, `MAXIMIZE_CONVERSIONS` (optional `target_cpa_micros`),
+`MAXIMIZE_CONVERSION_VALUE` (optional `target_roas`), `TARGET_CPA`,
+`TARGET_ROAS`, `TARGET_CPM`, or `MANUAL_CPC`. Shopping, Demand Gen, and
+Performance Max require a conversion-based strategy. `target_cpa_micros` is
+bounded by `ADS_MCP_MAX_CPC_BID_MICROS`; budgets by `ADS_MCP_MAX_BUDGET_MICROS`.
 
 ## Contributing
 

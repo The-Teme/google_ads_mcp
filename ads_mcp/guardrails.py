@@ -56,9 +56,7 @@ def _allowlist() -> set[str] | None:
   if not raw:
     return None
   return {
-      _normalize_customer_id(item)
-      for item in raw.split(",")
-      if item.strip()
+      _normalize_customer_id(item) for item in raw.split(",") if item.strip()
   }
 
 
@@ -153,4 +151,41 @@ def check_bid_micros(bid_micros: int) -> None:
         f"CPC bid {bid_micros} micros ({bid_micros / 1_000_000:.2f}) exceeds "
         f"the cap of {cap} micros ({cap / 1_000_000:.2f}). Raise "
         "ADS_MCP_MAX_CPC_BID_MICROS to allow more, or set it to 0 to disable."
+    )
+
+
+def check_target_cpa_micros(target_cpa_micros: int) -> None:
+  """Reject negative or over-cap target CPA bids.
+
+  A target CPA is the average amount you're willing to pay per conversion.
+  It reuses the CPC-bid ceiling (ADS_MCP_MAX_CPC_BID_MICROS, default 100.00)
+  since both are per-action amounts. Set the cap to 0 to disable.
+  """
+  if target_cpa_micros < 0:
+    raise ToolError("target_cpa_micros must be non-negative.")
+  cap = _read_cap("ADS_MCP_MAX_CPC_BID_MICROS", _DEFAULT_MAX_CPC_BID_MICROS)
+  if cap and target_cpa_micros > cap:
+    raise ToolError(
+        f"Target CPA {target_cpa_micros} micros "
+        f"({target_cpa_micros / 1_000_000:.2f}) exceeds the cap of {cap} "
+        f"micros ({cap / 1_000_000:.2f}). Raise ADS_MCP_MAX_CPC_BID_MICROS to "
+        "allow more, or set it to 0 to disable."
+    )
+
+
+# Target ROAS is a ratio (revenue / spend), e.g. 4.0 means $4 back per $1 spent.
+# A wildly large value is almost always a typo (e.g. micros vs ratio confusion)
+# and would effectively stop the campaign from spending, so we sanity-bound it.
+_MAX_TARGET_ROAS = 1000.0
+
+
+def check_target_roas(target_roas: float) -> None:
+  """Reject a target ROAS that is non-positive or implausibly large."""
+  if target_roas <= 0:
+    raise ToolError("target_roas must be greater than 0.")
+  if target_roas > _MAX_TARGET_ROAS:
+    raise ToolError(
+        f"target_roas {target_roas} is implausibly large (max "
+        f"{_MAX_TARGET_ROAS}). It is a ratio such as 4.0 (= 400% return), not "
+        "a micros value."
     )

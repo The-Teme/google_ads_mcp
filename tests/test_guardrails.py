@@ -113,3 +113,29 @@ def test_invalid_cap_env_raises():
   ):
     with pytest.raises(ToolError):
       guardrails.check_budget_micros(1)
+
+
+def test_target_cpa_cap_blocks_over_limit():
+  with mock.patch.dict(os.environ, {}, clear=True):
+    with pytest.raises(ToolError):
+      guardrails.check_target_cpa_micros(200_000_000)
+
+
+def test_target_cpa_allows_under_limit():
+  with mock.patch.dict(os.environ, {}, clear=True):
+    guardrails.check_target_cpa_micros(1_000_000)  # no raise
+
+
+def test_target_cpa_rejects_negative():
+  with pytest.raises(ToolError):
+    guardrails.check_target_cpa_micros(-1)
+
+
+@pytest.mark.parametrize("bad", [0, -1, 5000])
+def test_target_roas_rejects_invalid(bad):
+  with pytest.raises(ToolError):
+    guardrails.check_target_roas(bad)
+
+
+def test_target_roas_accepts_reasonable_ratio():
+  guardrails.check_target_roas(4.0)  # no raise

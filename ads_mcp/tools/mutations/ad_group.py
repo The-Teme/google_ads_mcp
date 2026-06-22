@@ -32,8 +32,9 @@ def create_ad_group(
     customer_id: str,
     name: str,
     campaign_resource_name: str,
-    cpc_bid_micros: int = 1000000,
+    cpc_bid_micros: int | None = 1000000,
     status: str = "ENABLED",
+    ad_group_type: str = "SEARCH_STANDARD",
     login_customer_id: str | None = None,
 ) -> dict[str, str]:
   """Creates an ad group within a campaign.
@@ -41,9 +42,15 @@ def create_ad_group(
   Args:
       customer_id: Google Ads customer ID (digits only).
       name: Ad group name (e.g., "S.S. John Barry Shipwreck").
-      campaign_resource_name: Resource name from create_search_campaign.
-      cpc_bid_micros: Max CPC bid in micros (1000000 = $1.00).
+      campaign_resource_name: Resource name from a create_*_campaign tool.
+      cpc_bid_micros: Max CPC bid in micros (1000000 = $1.00). Pass None to
+        omit it (e.g. for ad groups under conversion-based bidding strategies,
+        where a manual CPC bid is not used).
       status: ENABLED or PAUSED. Default ENABLED.
+      ad_group_type: Ad group type matching the campaign channel. Common
+        values: SEARCH_STANDARD (Search), DISPLAY_STANDARD (Display),
+        SHOPPING_PRODUCT_ADS (Shopping), VIDEO_RESPONSIVE (Video). Default
+        SEARCH_STANDARD.
       login_customer_id: MCC account ID if customer is managed.
 
   Returns:
@@ -52,7 +59,6 @@ def create_ad_group(
   customer_id, login_customer_id = validate_accounts(
       customer_id, login_customer_id
   )
-  check_bid_micros(cpc_bid_micros)
   ads_client = _get_client(login_customer_id)
   service = ads_client.get_service("AdGroupService")
 
@@ -62,9 +68,15 @@ def create_ad_group(
       status=_resolve_enum(
           enum_types.AdGroupStatusEnum.AdGroupStatus, status, "status"
       ),
-      type_=enum_types.AdGroupTypeEnum.AdGroupType.SEARCH_STANDARD,
-      cpc_bid_micros=cpc_bid_micros,
+      type_=_resolve_enum(
+          enum_types.AdGroupTypeEnum.AdGroupType,
+          ad_group_type,
+          "ad_group_type",
+      ),
   )
+  if cpc_bid_micros is not None:
+    check_bid_micros(cpc_bid_micros)
+    ad_group.cpc_bid_micros = cpc_bid_micros
 
   operation = service_types.AdGroupOperation(create=ad_group)
   try:

@@ -12,20 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Mutation tools for Google Ads API."""
+"""Mutation tools for Google Ads API.
 
-from ads_mcp.tools.mutations import ad
-from ads_mcp.tools.mutations import ad_group
-from ads_mcp.tools.mutations import budget
-from ads_mcp.tools.mutations import campaign
-from ads_mcp.tools.mutations import common
-from ads_mcp.tools.mutations import criterion
-
-__all__ = [
-    "ad",
-    "ad_group",
-    "budget",
-    "campaign",
-    "common",
-    "criterion",
-]
+This package intentionally does NOT eagerly import its tool-defining submodules.
+Each tool is registered on the shared MCP server as a side effect of the
+``@mcp.tool()`` decorator running at import time, so importing a module here is
+what exposes its tools. server.py imports the submodules conditionally (behind
+ADS_MCP_ENABLE_MUTATIONS / ADS_MCP_DIRECT_MUTATIONS) to keep direct-execute
+mutations off by default. Importing them here would register them
+unconditionally and defeat that gating.
+"""

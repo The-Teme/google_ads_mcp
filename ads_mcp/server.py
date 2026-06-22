@@ -26,11 +26,14 @@ Approval workflow (always-on):
   approval    – list_pending_changes, approve_change, reject_change
 
 Mutation tools (enabled when ADS_MCP_ENABLE_MUTATIONS=true):
-  preview          – preview_* diff tools (read-only, no API writes)
-  gated_campaign   – propose_* tools that stage changes for approval
-  budget / campaign / ad_group / ad / criterion  – original direct-execute
-                     tools from the upstream repo (still available for
-                     power users who want them; they bypass the approval flow)
+  preview              – preview_* diff tools (read-only, no API writes)
+  gated_campaign       – propose_* Search-campaign / status / budget tools
+  gated_asset          – propose_* image / YouTube video asset tools
+  gated_campaign_types – propose_* Display / Shopping / Demand Gen / Video /
+                         Performance Max campaign builders (one atomic change
+                         each)
+  budget / campaign / ad_group / ad / criterion / asset / campaign_types –
+                         direct-execute equivalents (bypass the approval flow)
 
   Note: direct-execute tools bypass the approval flow. They are OFF by
   default (approval-only). Set ADS_MCP_DIRECT_MUTATIONS=true to register
@@ -63,21 +66,27 @@ tools = [reporting, accounts, docs, mcc, approval]
 # Mutation tools (opt-in via env var)
 # ---------------------------------------------------------------------------
 if os.getenv("ADS_MCP_ENABLE_MUTATIONS", "false").lower() == "true":
-  from ads_mcp.tools.mutations import preview       # diff/preview tools
+  from ads_mcp.tools.mutations import preview  # diff/preview tools
   from ads_mcp.tools.mutations import gated_campaign  # propose_* tools
+  from ads_mcp.tools.mutations import gated_asset  # propose_* asset tools
+  from ads_mcp.tools.mutations import gated_campaign_types  # propose_* campaigns
 
-  tools.extend([preview, gated_campaign])
+  tools.extend([preview, gated_campaign, gated_asset, gated_campaign_types])
 
   # Original direct-execute tools bypass the approval flow and are therefore
   # OFF by default. Set ADS_MCP_DIRECT_MUTATIONS=true to opt back in.
   if os.getenv("ADS_MCP_DIRECT_MUTATIONS", "false").lower() == "true":
-    from ads_mcp.tools.mutations import budget     # pylint: disable=ungrouped-imports
-    from ads_mcp.tools.mutations import campaign   # pylint: disable=ungrouped-imports
-    from ads_mcp.tools.mutations import ad_group   # pylint: disable=ungrouped-imports
-    from ads_mcp.tools.mutations import ad         # pylint: disable=ungrouped-imports
+    from ads_mcp.tools.mutations import budget  # pylint: disable=ungrouped-imports
+    from ads_mcp.tools.mutations import campaign  # pylint: disable=ungrouped-imports
+    from ads_mcp.tools.mutations import ad_group  # pylint: disable=ungrouped-imports
+    from ads_mcp.tools.mutations import ad  # pylint: disable=ungrouped-imports
     from ads_mcp.tools.mutations import criterion  # pylint: disable=ungrouped-imports
+    from ads_mcp.tools.mutations import asset  # pylint: disable=ungrouped-imports
+    from ads_mcp.tools.mutations import campaign_types  # pylint: disable=ungrouped-imports
 
-    tools.extend([budget, campaign, ad_group, ad, criterion])
+    tools.extend(
+        [budget, campaign, ad_group, ad, criterion, asset, campaign_types]
+    )
 
 # ---------------------------------------------------------------------------
 # Auth (optional)
@@ -99,6 +108,7 @@ if os.getenv("FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_ID") and os.getenv(
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def main():
   """Initializes and runs the MCP server."""
