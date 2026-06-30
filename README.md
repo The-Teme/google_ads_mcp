@@ -74,6 +74,9 @@ These default to the safe option. Loosen them only deliberately.
   single-user local use.
 - `FASTMCP_SERVER_HOST` / `FASTMCP_SERVER_PORT`: Bind address/port for the HTTP
   transport. Defaults to `127.0.0.1:8000` (localhost only).
+- `ADS_MCP_AUDIT_LOG_PATH`: Path to the append-only audit log of every tool
+  call (reads + writes). Defaults to `~/.google_ads_mcp/audit.log`. See
+  [SECURITY.md](SECURITY.md) for the full security model.
 
 ### 4. Launch MCP Server
 

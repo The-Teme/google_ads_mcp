@@ -113,6 +113,9 @@ def test_execute_gaql(mock_get_ads_client):
   with mock.patch(
       "ads_mcp.tools.reporting.get_nested_attr", return_value="123"
   ):
-    assert reporting.execute_gaql(
+    result = reporting.execute_gaql(
         "SELECT campaign.id FROM campaign", "1234567890"
-    ) == {"data": [{"campaign.id": "123"}]}
+    )
+    assert result["data"] == [{"campaign.id": "123"}]
+    # Reporting output is third-party data and is tagged as untrusted.
+    assert result["_security_notice"] == reporting._UNTRUSTED_DATA_NOTICE

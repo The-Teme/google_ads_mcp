@@ -12,18 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The coordinator for the Google Ads API MCP."""
+"""Observability layer for the Google Ads MCP server.
 
-from ads_mcp.security.middleware import SecurityMiddleware
-from fastmcp import FastMCP
+The hard limits (budget/CPC ceilings, customer-ID allowlist, format checks)
+are enforced per-tool in ``ads_mcp.guardrails``. This package adds the
+"log and review" mitigation on top of that enforcement:
 
-# Initialize FastMCP server
-mcp_server = FastMCP(
-    name="Google Ads API",
-    mask_error_details=True,
-    client_log_level="error",
-)
-
-# Append-only audit log for every tool call (reads + writes). The hard limits
-# themselves are enforced per-tool in ads_mcp.guardrails.
-mcp_server.add_middleware(SecurityMiddleware())
+  audit       – append-only JSONL log of every tool call (reads + writes).
+  middleware  – a FastMCP middleware that writes the audit record for every
+                tool uniformly, including the original direct-execute tools,
+                not just the gated propose_* ones.
+"""
