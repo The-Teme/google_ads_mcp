@@ -1,14 +1,21 @@
 # Google Ads MCP Server
 
 ## Project Overview
-The **Google Ads MCP Server** is a Python implementation of the Model Context Protocol (MCP) that bridges Large Language Models (LLMs), such as Gemini, with the Google Ads API. It allows users to interact with their Google Ads accounts using natural language queries to retrieve campaigns, metrics, and other data.
+The **Google Ads MCP Server** is a Python implementation of the Model Context Protocol (MCP) that bridges Large Language Models (LLMs), such as Claude, with the Google Ads API. It allows users to interact with their Google Ads accounts using natural language queries to retrieve campaigns, metrics, and other data.
+
+This is a security-hardened fork of the upstream Google Ads MCP. See `SECURITY.md` for the full defense model (read-only by default, human-in-the-loop approval workflow, account allowlist, budget/CPC caps, audit log).
 
 It exposes several MCP tools and resources:
-*   **Tools:**
+*   **Always-on read-only tools:**
     *   `execute_gaql`: Execute Google Ads Query Language queries.
     *   `list_accessible_accounts`: List accessible customer IDs.
+    *   `list_mcc_child_accounts` / `get_account_hierarchy` / `get_account_summary`: MCC navigation.
     *   `get_gaql_doc`: Retrieve GAQL grammar documentation.
     *   `get_reporting_view_doc`: Retrieve documentation for specific reporting views (e.g., campaign, ad_group).
+*   **Mutation tools (only when `ADS_MCP_ENABLE_MUTATIONS=true`):**
+    *   Approval-gated by default: `propose_*` → `list_pending_changes` → `approve_change` / `reject_change`.
+    *   Covers budgets, Search / Display / Shopping / Demand Gen / Video / Performance Max campaigns, ad groups, ads, criteria, and assets.
+    *   Direct-execute equivalents stay OFF unless `ADS_MCP_DIRECT_MUTATIONS=true`.
 *   **Resources:**
     *   `resource://Google_Ads_Query_Language`: GAQL guide.
     *   `resource://Google_Ads_API_Reporting_Views`: Overview of reporting views.
@@ -28,17 +35,22 @@ It exposes several MCP tools and resources:
 
 ## Project Structure
 *   `ads_mcp/`: Main source code directory.
-    *   `server.py`: Entry point for the MCP server.
-    *   `coordinator.py`: Server coordinator logic.
+    *   `server.py`: HTTP (`streamable-http`) entry point — hardened, auth-gated.
+    *   `stdio.py`: stdio entry point — no network port, preferred for local use.
+    *   `coordinator.py`: Server coordinator / `mcp_server` instance.
+    *   `guardrails.py`: Customer-ID validation, account allowlist, budget/CPC caps.
+    *   `security/`: `SecurityMiddleware` (audit log, untrusted-content tagging).
     *   `tools/`: Specific MCP tools implementation.
-        *   `api.py`: Tools for direct interaction with Google Ads API (e.g., executing GAQL).
+        *   `reporting.py`: `execute_gaql` and reporting tools.
+        *   `accounts.py` / `mcc.py`: Account listing and MCC navigation.
         *   `docs.py`: Documentation tools exposing `context/` files.
+        *   `mutations/`: Approval-gated and direct-execute write tools.
     *   `context/`: Context resources.
         *   `GAQL.md`: GAQL grammar documentation.
         *   `views/`: YAML definitions for reporting views.
 *   `tests/`: Test suite mirroring the source structure.
 *   `pyproject.toml`: Project configuration and dependencies.
-*   `LLM.md`: Specific instructions for LLM agents.
+*   `SECURITY.md`: Security model and operational checklist.
 
 ## Setup & Development
 
@@ -59,10 +71,12 @@ uv sync
 ### Key Commands
 
 **Run the Server:**
-To start the MCP server locally:
+For local single-user use, prefer the stdio entry point (no network port):
 ```bash
-uv run -m ads_mcp.server
+uv run -m ads_mcp.stdio
 ```
+The HTTP transport (`uv run -m ads_mcp.server`) opens a network port and refuses
+to start without an auth provider unless `ADS_MCP_ALLOW_INSECURE_HTTP=true`.
 
 **Run Tests:**
 Execute the test suite using `pytest`:
@@ -95,3 +109,8 @@ uv run pylint ads_mcp tests
 *   **Environment Variables:**
     *   `GOOGLE_ADS_CREDENTIALS`: Path to the `google-ads.yaml` file (defaults to `$ROOT_DIR/google-ads.yaml`).
     *   `USE_GOOGLE_OAUTH_ACCESS_TOKEN`: Set to enable Google OAuth token verification.
+    *   `ADS_MCP_ENABLE_MUTATIONS`: `true` to register write tools (default off, read-only).
+    *   `ADS_MCP_DIRECT_MUTATIONS`: `true` to register approval-bypassing direct-execute tools (default off).
+    *   `ADS_MCP_ALLOWED_CUSTOMER_IDS`: Comma-separated customer-ID allowlist (strongly recommended).
+    *   `ADS_MCP_MAX_BUDGET_MICROS` / `ADS_MCP_MAX_CPC_BID_MICROS`: Hard caps on budget and CPC.
+    *   See `SECURITY.md` for the full list and the locked-down local config.
