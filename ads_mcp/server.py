@@ -49,7 +49,7 @@ from ads_mcp.tools import accounts
 from ads_mcp.tools import docs
 from ads_mcp.tools import mcc
 from ads_mcp.tools import reporting
-from ads_mcp.tools._utils import get_ads_client
+from ads_mcp.tools._utils import verify_credentials_or_exit
 from ads_mcp.tools.mutations import approval  # always register approval tools
 import dotenv
 from fastmcp.server.auth.providers.google import GoogleProvider
@@ -113,7 +113,7 @@ if os.getenv("FASTMCP_SERVER_AUTH_GOOGLE_CLIENT_ID") and os.getenv(
 def main():
   """Initializes and runs the MCP server."""
   asyncio.run(update_views_yaml())
-  get_ads_client()
+  verify_credentials_or_exit()
 
   # The streamable-http transport exposes a network port. Refuse to start
   # without an auth provider unless the operator explicitly opts into an

@@ -15,9 +15,11 @@
 """Common utilities for Google Ads API MCP tools."""
 
 import os
+import sys
 from ads_mcp.utils import ROOT_DIR
 from fastmcp.server.dependencies import get_access_token
 from google.ads.googleads.client import GoogleAdsClient
+from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 import yaml
 
@@ -67,3 +69,30 @@ def get_ads_client() -> GoogleAdsClient:
     )
 
   return _ADS_CLIENT
+
+
+def verify_credentials_or_exit() -> None:
+  """Validates Google Ads credentials at startup with a clear failure message.
+
+  The MCP client only sees a generic transport error (e.g. -32000) when the
+  server process dies during boot, so an expired refresh token or a missing
+  YAML otherwise surfaces as an opaque failure. This turns the two common
+  credential problems into a plain-English message on stderr and a clean exit.
+  """
+  try:
+    get_ads_client()
+  except RefreshError as exc:
+    print(
+        "\n[google-ads MCP] OAuth credentials were rejected:\n"
+        f"    {exc}\n\n"
+        "Your refresh token is expired or revoked. Regenerate it:\n"
+        "    uv run python regen_refresh_token.py\n"
+        "Then restart / reconnect the MCP server. If this keeps happening every\n"
+        "~7 days, publish your OAuth app to Production (Cloud Console -> OAuth\n"
+        "consent screen) so refresh tokens stop expiring. See SECURITY.md.\n",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+  except FileNotFoundError as exc:
+    print(f"\n[google-ads MCP] {exc}\n", file=sys.stderr)
+    sys.exit(1)

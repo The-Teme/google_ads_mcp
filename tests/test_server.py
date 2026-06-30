@@ -23,7 +23,7 @@ from ads_mcp import server
 
 @mock.patch.dict(os.environ, {"USE_GOOGLE_OAUTH_ACCESS_TOKEN": "true"})
 @mock.patch("ads_mcp.server.mcp_server")
-@mock.patch("ads_mcp.server.get_ads_client")
+@mock.patch("ads_mcp.server.verify_credentials_or_exit")
 @mock.patch("ads_mcp.server.update_views_yaml", new_callable=mock.Mock)
 def test_main_with_oauth_env(
     mock_update_views, mock_get_ads_client, mock_mcp_server
@@ -46,7 +46,7 @@ def test_main_with_oauth_env(
 
 
 @mock.patch("ads_mcp.server.mcp_server")
-@mock.patch("ads_mcp.server.get_ads_client")
+@mock.patch("ads_mcp.server.verify_credentials_or_exit")
 @mock.patch("ads_mcp.server.update_views_yaml", new_callable=mock.Mock)
 def test_main_refuses_insecure_http(
     mock_update_views, mock_get_ads_client, mock_mcp_server
@@ -65,7 +65,7 @@ def test_main_refuses_insecure_http(
 
 
 @mock.patch("ads_mcp.server.mcp_server")
-@mock.patch("ads_mcp.server.get_ads_client")
+@mock.patch("ads_mcp.server.verify_credentials_or_exit")
 @mock.patch("ads_mcp.server.update_views_yaml", new_callable=mock.Mock)
 def test_main_insecure_http_opt_in(
     mock_update_views, mock_get_ads_client, mock_mcp_server
@@ -82,7 +82,7 @@ def test_main_insecure_http_opt_in(
 
 
 @mock.patch("ads_mcp.server.mcp_server")
-@mock.patch("ads_mcp.server.get_ads_client")
+@mock.patch("ads_mcp.server.verify_credentials_or_exit")
 @mock.patch("ads_mcp.server.update_views_yaml", new_callable=mock.Mock)
 def test_main_no_env(mock_update_views, mock_get_ads_client, mock_mcp_server):
   """Tests main function with no env vars."""
@@ -103,7 +103,7 @@ def test_mutations_disabled_by_default():
   with mock.patch.dict(os.environ, {}, clear=True):
     # We need to mock get_ads_client and update_views_yaml to avoid actual calls
     with (
-        mock.patch("ads_mcp.server.get_ads_client"),
+        mock.patch("ads_mcp.server.verify_credentials_or_exit"),
         mock.patch("ads_mcp.server.update_views_yaml"),
         mock.patch("ads_mcp.server.mcp_server"),
     ):
@@ -124,7 +124,7 @@ def test_mutations_enabled_are_approval_only_by_default():
       os.environ, {"ADS_MCP_ENABLE_MUTATIONS": "true"}, clear=True
   ):
     with (
-        mock.patch("ads_mcp.server.get_ads_client"),
+        mock.patch("ads_mcp.server.verify_credentials_or_exit"),
         mock.patch("ads_mcp.server.update_views_yaml"),
         mock.patch("ads_mcp.server.mcp_server"),
     ):
@@ -153,7 +153,7 @@ def test_direct_mutations_opt_in():
       clear=True,
   ):
     with (
-        mock.patch("ads_mcp.server.get_ads_client"),
+        mock.patch("ads_mcp.server.verify_credentials_or_exit"),
         mock.patch("ads_mcp.server.update_views_yaml"),
         mock.patch("ads_mcp.server.mcp_server"),
     ):

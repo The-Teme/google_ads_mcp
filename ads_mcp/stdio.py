@@ -29,7 +29,7 @@ from ads_mcp.tools import accounts
 from ads_mcp.tools import docs
 from ads_mcp.tools import mcc
 from ads_mcp.tools import reporting
-from ads_mcp.tools._utils import get_ads_client
+from ads_mcp.tools._utils import verify_credentials_or_exit
 from ads_mcp.tools.mutations import approval  # always register approval tools
 import dotenv
 
@@ -70,7 +70,7 @@ if os.getenv("ADS_MCP_ENABLE_MUTATIONS", "false").lower() == "true":
 def main():
   """Initializes and runs the MCP server over stdio."""
   asyncio.run(update_views_yaml())  # Check and update docs resource
-  get_ads_client()  # Check Google Ads credentials
+  verify_credentials_or_exit()  # Check Google Ads credentials
   print("mcp server starting...", file=sys.stderr)
   mcp_server.run(
       transport="stdio",
